@@ -41,18 +41,23 @@ router.post("/remove", async (req, res) => {
     const { userId, hotelId } = req.body;
 
     try {
-        let user = await User.findById(userId);
-        if (!user) return res.status(404).json({ msg: "User not found" });
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ msg: "User not found" });
+        }
 
-        user.wishlist = user.wishlist.filter(id => id !== hotelId);
-        await user.save();
 
-        res.json({ msg: "Hotel removed from wishlist", wishlist: user.wishlist });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("Server Error");
+        // 🔥 Convert hotelId to string for proper comparison
+        user.wishlist = user.wishlist.filter(hotel => hotel && hotel.toString() !== hotelId.toString());
+
+        await user.save(); // ✅ Ensure changes are saved
+        return res.json({ msg: "Hotel removed from wishlist", wishlist: user.wishlist });
+    } catch (error) {
+        console.error("❌ Error in wishlist remove API:", error);
+        return res.status(500).json({ msg: "Server error" });
     }
 });
+
 
 // ✅ Fetch wishlist for logged-in user
 router.get("/:userId", async (req, res) => {

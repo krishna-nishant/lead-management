@@ -1,9 +1,14 @@
 import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Heart, BookOpen, MapPin, IndianRupee  } from 'lucide-react';
+import { Toaster, toast } from "sonner";
 
 const Hotels = () => {
   const { user, token } = useContext(AuthContext);
   const [hotels, setHotels] = useState([]);
+  // const { toast } = useToast();
 
   useEffect(() => {
     fetch("/hotels.json")
@@ -14,11 +19,12 @@ const Hotels = () => {
 
   const addToWishlist = async (hotelId) => {
     if (!user) {
-      alert("You must be logged in to add to wishlist.");
+      toast.error("You must be logged in to add to wishlist.");
       return;
     }
   
     try {
+      // ✅ Send request to add hotel to wishlist
       const response = await fetch("http://localhost:5000/api/wishlist/add", {
         method: "POST",
         headers: {
@@ -31,9 +37,9 @@ const Hotels = () => {
       const data = await response.json();
   
       if (response.ok) {
-        alert(data.msg);
+        toast.success(`✅ ${data.msg}`);
   
-        // ✅ **Update Score After Adding to Wishlist**
+        // ✅ **Send request to update score**
         const scoreResponse = await fetch("http://localhost:5000/api/leads/update-score", {
           method: "POST",
           headers: {
@@ -44,34 +50,36 @@ const Hotels = () => {
         });
   
         const scoreData = await scoreResponse.json();
-        if (scoreResponse.ok) {
-          alert(`Score updated! New Score: ${scoreData.score}`);
-        } else {
-          console.error("Error updating score:", scoreData.msg);
-        }
   
+        if (scoreResponse.ok) {
+          toast.success(`🎉 Score Updated: ${scoreData.score}`);
+        } else {
+          console.error("❌ Score Update Error:", scoreData.msg);
+          toast.error("⚠️ Failed to update score.");
+        }
       } else {
-        alert("Failed to add to wishlist.");
+        toast.error("⚠️ Failed to add to wishlist.");
       }
     } catch (error) {
-      console.error("Error adding to wishlist:", error);
-      alert("Something went wrong. Try again.");
+      console.error("❌ Error adding to wishlist:", error);
+      toast.error("Something went wrong. Try again.");
     }
   };
   
 
-
+  
+  
   const bookHotel = async (hotelId, hotelName) => {
     if (!user) {
-      alert("You must be logged in to book a hotel.");
+      toast.error("You must be logged in to book a hotel.");
       return;
     }
-
+  
     const confirmBooking = window.confirm(`Are you sure you want to book ${hotelName}?`);
     if (!confirmBooking) return;
-
+  
     try {
-      const scoreResponse = await fetch("http://localhost:5000/api/leads/update-score", {
+      const response = await fetch("http://localhost:5000/api/leads/update-score", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -79,37 +87,75 @@ const Hotels = () => {
         },
         body: JSON.stringify({ userId: user._id, action: "booking" }),
       });
-
-      const scoreData = await scoreResponse.json();
-      if (scoreResponse.ok) {
-        alert(`Successfully booked ${hotelName}! New Score: ${scoreData.score}`);
-      } else {
-        console.error("Error updating score:", scoreData.msg);
+  
+      const data = await response.json();
+  
+      if (response.status === 403) {
+        toast.error("❌ Unauthorized. Please log in again.");
+        return;
       }
-
+  
+      if (response.ok) {
+        toast.success(`Successfully booked ${hotelName}! New Score: ${data.score}`);
+      } else {
+        console.error("Error updating score:", data.msg);
+        toast.error("⚠️ Failed to update score.");
+      }
+  
     } catch (error) {
-      console.error("Error booking hotel:", error);
-      alert("Something went wrong. Try again.");
+      console.error("❌ Error booking hotel:", error);
+      toast.error("Something went wrong. Try again.");
     }
-};
-
+  };
+  
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">Available Hotels</h2>
-      <div className="grid grid-cols-3 gap-4">
+    <div className="container mx-auto py-8 px-4">
+      <h2 className="text-3xl font-bold mb-6">Available Hotels</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {hotels.map((hotel) => (
-          <div key={hotel.id} className="border p-4 rounded-lg">
-            <h3 className="text-lg font-semibold">{hotel.name}</h3>
-            <p>{hotel.location}</p>
-            <p className="font-bold">${hotel.price} per night</p>
-            <button className="mt-2 bg-yellow-500 text-white px-4 py-2 rounded" onClick={() => addToWishlist(hotel.id)}>
-              Add to Wishlist
-            </button>
-            <button className="mt-2 bg-green-500 text-white px-4 py-2 rounded" onClick={() => bookHotel(hotel.id, hotel.name)}>
-              Book Now
-            </button>
-          </div>
+          <Card key={hotel.id} className="overflow-hidden transition-all hover:shadow-lg">
+            <div className="h-48 bg-slate-200 flex items-center justify-center">
+              <img 
+                src={hotel.image || `/placeholder.svg?height=200&width=400`} 
+                alt={hotel.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <CardHeader>
+              <CardTitle className="flex justify-between items-start">
+                <span>{hotel.name}</span>
+              </CardTitle>
+              <div className="flex items-center text-muted-foreground">
+                <MapPin className="h-4 w-4 mr-1" />
+                <span>{hotel.location}</span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center text-lg font-bold">
+                <IndianRupee  className="h-5 w-5 text-green-600" />
+                <span>₹{hotel.price}</span>
+                <span className="text-sm font-normal text-muted-foreground ml-1">per night</span>
+              </div>
+            </CardContent>
+            <CardFooter className="flex gap-2">
+              <Button 
+                variant="outline" 
+                className="flex-1 flex items-center gap-1"
+                onClick={() => addToWishlist(hotel.id)}
+              >
+                <Heart className="h-4 w-4" />
+                <span>Wishlist</span>
+              </Button>
+              <Button 
+                className="flex-1 flex items-center gap-1 bg-green-600 hover:bg-green-700"
+                onClick={() => bookHotel(hotel.id, hotel.name)}
+              >
+                <BookOpen className="h-4 w-4" />
+                <span>Book Now</span>
+              </Button>
+            </CardFooter>
+          </Card>
         ))}
       </div>
     </div>

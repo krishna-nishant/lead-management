@@ -1,83 +1,82 @@
 [
-    {
-      "id": 1,
-      "name": "The Grand Hotel",
-      "location": "New York",
-      "price": 150,
-      "rating": 4.5,
-      "image": "https://example.com/hotel.jpg"
-    },
-    {
-      "id": 2,
-      "name": "City View Inn",
-      "location": "Los Angeles",
-      "price": 120,
-      "rating": 4.3,
-      "image": "https://example.com/hotel2.jpg"
-    },
-    {
-      "id": 3,
-      "name": "The Grand Hotel",
-      "location": "New York",
-      "price": 150,
-      "rating": 4.5,
-      "image": "https://example.com/hotel.jpg"
-    },
-    {
-      "id": 4,
-      "name": "City View Inn",
-      "location": "Los Angeles",
-      "price": 120,
-      "rating": 4.3,
-      "image": "https://example.com/hotel2.jpg"
-    },
-    {
-      "id": 5,
-      "name": "The Grand Hotel",
-      "location": "New York",
-      "price": 150,
-      "rating": 4.5,
-      "image": "https://example.com/hotel.jpg"
-    },
-    {
-      "id": 6,
-      "name": "City View Inn",
-      "location": "Los Angeles",
-      "price": 120,
-      "rating": 4.3,
-      "image": "https://example.com/hotel2.jpg"
-    },
-    {
-      "id": 7,
-      "name": "The Grand Hotel",
-      "location": "New York",
-      "price": 150,
-      "rating": 4.5,
-      "image": "https://example.com/hotel.jpg"
-    },
-    {
-      "id": 8,
-      "name": "City View Inn",
-      "location": "Los Angeles",
-      "price": 120,
-      "rating": 4.3,
-      "image": "https://example.com/hotel2.jpg"
-    },
-    {
-      "id": 9,
-      "name": "The Grand Hotel",
-      "location": "New York",
-      "price": 150,
-      "rating": 4.5,
-      "image": "https://example.com/hotel.jpg"
-    },
-    {
-      "id": 10,
-      "name": "City View Inn",
-      "location": "Los Angeles",
-      "price": 120,
-      "rating": 4.3,
-      "image": "https://example.com/hotel2.jpg"
-    }
-  ]
-  
+  {
+    "id": 1,
+    "name": "Taj Palace",
+    "location": "Mumbai",
+    "price": 1800,
+    "rating": 4.8,
+    "image": "https://images.pexels.com/photos/18929698/pexels-photo-18929698.jpeg"
+  },
+  {
+    "id": 2,
+    "name": "The Oberoi",
+    "location": "Delhi",
+    "price": 2000,
+    "rating": 4.7,
+    "image": "https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg"
+  },
+  {
+    "id": 3,
+    "name": "Leela Palace",
+    "location": "Bangalore",
+    "price": 1700,
+    "rating": 4.6,
+    "image": "https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg"
+  },
+  {
+    "id": 4,
+    "name": "ITC Grand Chola",
+    "location": "Chennai",
+    "price": 1600,
+    "rating": 4.5,
+    "image": "https://images.pexels.com/photos/221506/pexels-photo-221506.jpeg"
+  },
+  {
+    "id": 5,
+    "name": "Hyatt Regency",
+    "location": "Kolkata",
+    "price": 1400,
+    "rating": 4.4,
+    "image": "https://images.pexels.com/photos/271639/pexels-photo-271639.jpeg"
+  },
+  {
+    "id": 6,
+    "name": "The Lalit",
+    "location": "Goa",
+    "price": 2200,
+    "rating": 4.9,
+    "image": "https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg"
+  },
+  {
+    "id": 7,
+    "name": "Radisson Blu",
+    "location": "Jaipur",
+    "price": 1500,
+    "rating": 4.3,
+    "image": "https://images.pexels.com/photos/271639/pexels-photo-271639.jpeg"
+  },
+  {
+    "id": 8,
+    "name": "JW Marriott",
+    "location": "Pune",
+    "price": 1900,
+    "rating": 4.6,
+    "image": "https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg"
+  },
+  {
+    "id": 9,
+    "name": "Novotel",
+    "location": "Hyderabad",
+    "price": 1300,
+    "rating": 4.2,
+    "image": "https://images.pexels.com/photos/271639/pexels-photo-271639.jpeg"
+  },
+  {
+    "id": 10,
+    "name": "Trident Hotel",
+    "location": "Udaipur",
+    "price": 2100,
+    "rating": 4.8,
+    "image": "https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg"
+  }
+]
