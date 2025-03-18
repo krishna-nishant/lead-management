@@ -1,0 +1,83 @@
+[
+    {
+      "id": 1,
+      "name": "The Grand Hotel",
+      "location": "New York",
+      "price": 150,
+      "rating": 4.5,
+      "image": "https://example.com/hotel.jpg"
+    },
+    {
+      "id": 2,
+      "name": "City View Inn",
+      "location": "Los Angeles",
+      "price": 120,
+      "rating": 4.3,
+      "image": "https://example.com/hotel2.jpg"
+    },
+    {
+      "id": 3,
+      "name": "The Grand Hotel",
+      "location": "New York",
+      "price": 150,
+      "rating": 4.5,
+      "image": "https://example.com/hotel.jpg"
+    },
+    {
+      "id": 4,
+      "name": "City View Inn",
+      "location": "Los Angeles",
+      "price": 120,
+      "rating": 4.3,
+      "image": "https://example.com/hotel2.jpg"
+    },
+    {
+      "id": 5,
+      "name": "The Grand Hotel",
+      "location": "New York",
+      "price": 150,
+      "rating": 4.5,
+      "image": "https://example.com/hotel.jpg"
+    },
+    {
+      "id": 6,
+      "name": "City View Inn",
+      "location": "Los Angeles",
+      "price": 120,
+      "rating": 4.3,
+      "image": "https://example.com/hotel2.jpg"
+    },
+    {
+      "id": 7,
+      "name": "The Grand Hotel",
+      "location": "New York",
+      "price": 150,
+      "rating": 4.5,
+      "image": "https://example.com/hotel.jpg"
+    },
+    {
+      "id": 8,
+      "name": "City View Inn",
+      "location": "Los Angeles",
+      "price": 120,
+      "rating": 4.3,
+      "image": "https://example.com/hotel2.jpg"
+    },
+    {
+      "id": 9,
+      "name": "The Grand Hotel",
+      "location": "New York",
+      "price": 150,
+      "rating": 4.5,
+      "image": "https://example.com/hotel.jpg"
+    },
+    {
+      "id": 10,
+      "name": "City View Inn",
+      "location": "Los Angeles",
+      "price": 120,
+      "rating": 4.3,
+      "image": "https://example.com/hotel2.jpg"
+    }
+  ]
+  

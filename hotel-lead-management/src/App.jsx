@@ -1,20 +1,57 @@
-import { Link } from "react-router-dom";
+import { Routes, Route, Link, useLocation } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "./context/AuthContext";
+import Signup from "./pages/Signup";
+import Login from "./pages/Login";
+import Hotels from "./pages/Hotels";
+import Wishlist from "./pages/Wishlist";
+import AdminDashboard from "./pages/AdminDashboard";
 
-const App = () => {
+function App() {
+  const { user, logout } = useContext(AuthContext);
+  const location = useLocation(); // ✅ Get the current route
+
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">AI-Powered Hotel Lead Management</h1>
-      <nav className="flex space-x-4 mb-6">
-        <Link to="/hotels" className="bg-blue-500 text-white px-4 py-2 rounded">
-          Browse Hotels
-        </Link>
-        <Link to="/wishlist" className="bg-yellow-500 text-white px-4 py-2 rounded">
-          View Wishlist
-        </Link>
-      </nav>
-      <p className="text-lg">Select an option above to continue.</p>
-    </div>
+    <>
+      {/* ✅ Hide navbar when on /admin */}
+      {location.pathname !== "/admin" && (
+        <nav className="p-4 bg-gray-200 flex justify-between">
+          <div>
+            {user ? (
+              <>
+                <Link to="/hotels" className="mr-4">Hotels</Link>
+                <Link to="/wishlist" className="mr-4">Wishlist</Link>
+              </>
+            ) : (
+              <>
+                <Link to="/signup" className="mr-4">Signup</Link>
+                <Link to="/login" className="mr-4">Login</Link>
+              </>
+            )}
+          </div>
+          <div>
+            {user ? (
+              <>
+                <span className="mr-4">Welcome, {user.name}</span>
+                <button onClick={logout} className="bg-red-500 text-white px-4 py-2 rounded">
+                  Logout
+                </button>
+              </>
+            ) : null}
+          </div>
+        </nav>
+      )}
+
+      {/* Routes */}
+      <Routes>
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/hotels" element={user ? <Hotels /> : <Login />} />
+        <Route path="/wishlist" element={user ? <Wishlist /> : <Login />} />
+        <Route path="/admin" element={<AdminDashboard />} /> {/* ✅ No Navbar Here */}
+      </Routes>
+    </>
   );
-};
+}
 
 export default App;
