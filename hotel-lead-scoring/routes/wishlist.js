@@ -3,6 +3,8 @@ const router = express.Router();
 const User = require("../models/User");
 const fs = require("fs");
 const path = require("path");
+const generateEmail = require("../utils/generateEmail");
+const sendEmail = require("../utils/sendEmail");
 
 const hotelsFilePath = path.resolve(__dirname, "../public/hotels.json");
 
@@ -11,13 +13,20 @@ const hotelsFilePath = path.resolve(__dirname, "../public/hotels.json");
     console.error("❌ hotels.json file is missing. Check path:", hotelsFilePath);
 }
 
-// ✅ Add Hotel to Wishlist
 router.post("/add", async (req, res) => {
     const { userId, hotelId } = req.body;
 
     try {
         let user = await User.findById(userId);
         if (!user) return res.status(404).json({ msg: "User not found" });
+
+        // ✅ Read hotels from JSON file
+        const hotelsFilePath = path.join(__dirname, "../public/hotels.json");
+        const hotelsData = JSON.parse(fs.readFileSync(hotelsFilePath, "utf8"));
+
+        // ✅ Find the hotel by ID
+        const hotel = hotelsData.find((h) => h.id === hotelId);
+        if (!hotel) return res.status(404).json({ msg: "Hotel not found" });
 
         // ✅ Prevent duplicate entries
         if (user.wishlist.includes(hotelId)) {
@@ -27,9 +36,15 @@ router.post("/add", async (req, res) => {
         user.wishlist.push(hotelId);
         await user.save();
 
+        // ✅ AI-Generated Email Content
+        const emailBody = await generateEmail(user, "added to wishlist", hotel.name);
+
+        // ✅ Send Email with Nodemailer
+        await sendEmail(user.email, `Still thinking about ${hotel.name}?`, emailBody);
+
         res.json({ msg: "Hotel added to wishlist", wishlist: user.wishlist });
     } catch (err) {
-        console.error(err);
+        console.error("❌ Error in wishlist add API:", err);
         res.status(500).json({ msg: "Server Error" });
     }
 });

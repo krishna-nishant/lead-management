@@ -66,47 +66,65 @@ const Hotels = () => {
     }
   };
   
-
-  
-  
   const bookHotel = async (hotelId, hotelName) => {
     if (!user) {
-      toast.error("You must be logged in to book a hotel.");
-      return;
+        toast.error("❌ You must be logged in to book a hotel.");
+        return;
     }
-  
+
     const confirmBooking = window.confirm(`Are you sure you want to book ${hotelName}?`);
     if (!confirmBooking) return;
-  
+
     try {
-      const response = await fetch("http://localhost:5000/api/leads/update-score", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ userId: user._id, action: "booking" }),
-      });
-  
-      const data = await response.json();
-  
-      if (response.status === 403) {
-        toast.error("❌ Unauthorized. Please log in again.");
-        return;
-      }
-  
-      if (response.ok) {
-        toast.success(`Successfully booked ${hotelName}! New Score: ${data.score}`);
-      } else {
-        console.error("Error updating score:", data.msg);
-        toast.error("⚠️ Failed to update score.");
-      }
-  
+        // ✅ Step 1: Update Lead Score
+        const response = await fetch("http://localhost:5000/api/leads/update-score", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ userId: user._id, action: "booking" }),
+        });
+
+        const data = await response.json();
+
+        if (response.status === 403) {
+            toast.error("❌ Unauthorized. Please log in again.");
+            return;
+        }
+
+        if (response.ok) {
+            toast.success(`✅ Successfully booked ${hotelName}! New Score: ${data.score}`);
+
+            // ✅ Step 2: Send AI-generated email confirmation
+            const emailResponse = await fetch("http://localhost:5000/api/leads/send-booking-email", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ userId: user._id, hotelName }),
+            });
+
+            const emailData = await emailResponse.json();
+
+            if (emailResponse.ok) {
+                toast.success("📩 Confirmation email sent!");
+            } else {
+                console.error("❌ Error sending email:", emailData.msg);
+                toast.error("⚠️ Failed to send email.");
+            }
+        } else {
+            console.error("❌ Error updating score:", data.msg);
+            toast.error("⚠️ Failed to update score.");
+        }
+
     } catch (error) {
-      console.error("❌ Error booking hotel:", error);
-      toast.error("Something went wrong. Try again.");
+        console.error("❌ Error booking hotel:", error);
+        toast.error("Something went wrong. Try again.");
     }
-  };
+};
+
   
 
   return (

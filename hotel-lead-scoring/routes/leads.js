@@ -3,12 +3,19 @@ const router = express.Router();
 const Lead = require("../models/Lead");
 const User = require("../models/User");
 const twilio = require("twilio");
+
+const generateEmail = require("../utils/generateEmail");
+const sendEmail = require("../utils/sendEmail");
+
 const accountSid = process.env.TWILIO_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const whatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER;
 
 const client = twilio(accountSid, authToken);
 const auth = require("../middleware/auth"); // Protect routes
+
+const sendWhatsAppMessage = require("../utils/sendWhatsapp");
+
 
 // Scoring System
 const SCORE_RULES = {
@@ -28,7 +35,7 @@ const SALES_REPS = {
 };
 
 // Function to send WhatsApp message
-const sendWhatsAppMessage = async (lead) => {
+/* const sendWhatsAppMessage = async (lead) => {
     try {
         const message = await client.messages.create({
             body: `Hello ${lead.name}, we noticed you're interested in our hotels. Let us know how we can assist you!`,
@@ -39,7 +46,7 @@ const sendWhatsAppMessage = async (lead) => {
     } catch (error) {
         console.error("❌ Error sending WhatsApp message:", error);
     }
-};
+}; */
 
 const nodemailer = require("nodemailer");
 
@@ -70,8 +77,8 @@ const categorizeLead = (score) => {
     if (score >= 100) return "hot";
     if (score >= 75) return "warm";
     return "cold";
-  };
-  
+};
+
 
 // ✅ Get Leads for Logged-in User
 router.get("/", auth, async (req, res) => {
@@ -83,7 +90,25 @@ router.get("/", auth, async (req, res) => {
         res.status(500).send("Server Error");
     }
 });
+router.post("/send-booking-email", async (req, res) => {
+    const { userId, hotelName } = req.body;
 
+    try {
+        let user = await User.findById(userId);
+        if (!user) return res.status(404).json({ msg: "User not found" });
+
+        // ✅ Generate AI-powered Email Content
+        const emailBody = await generateEmail(user, "hotel booking", hotelName);
+
+        // ✅ Send Email using Nodemailer
+        await sendEmail(user.email, `Your Booking for ${hotelName} is Confirmed`, emailBody);
+
+        res.json({ msg: "Booking confirmation email sent!" });
+    } catch (err) {
+        console.error("❌ Error sending booking email:", err);
+        res.status(500).json({ msg: "Failed to send email." });
+    }
+});
 // ✅ Update User Score (Previously Lead Score)
 router.post("/update-score", async (req, res) => {
     const { userId, action } = req.body;
@@ -95,14 +120,6 @@ router.post("/update-score", async (req, res) => {
         // Define scoring logic
         const scoreMapping = { wishlist: 15, booking: 50 };
         const scoreToAdd = scoreMapping[action] || 0;
-
-        /* // ✅ Prevent duplicate scoring for the same action within the last 24 hours
-        const existingAction = user.actions.find(
-            (a) => a.action === action && new Date() - new Date(a.timestamp) < 24 * 60 * 60 * 1000
-        );
-        if (existingAction) {
-            return res.json({ msg: "Score already updated recently for this action", score: user.score });
-        } */
 
         user.score += scoreToAdd;
         user.category = categorizeLead(user.score); // ✅ Update category dynamically
@@ -133,7 +150,11 @@ router.post("/check-score", async (req, res) => {
             }
             else if (user.score > 75) {
                 if (user.phone) {
-                    await sendWhatsAppMessage(user);
+                    // await sendWhatsAppMessage(user);
+                    await sendWhatsAppMessage(
+                        user.phone,
+                        `Hey ${user.name}, you’re one step away from booking your dream stay! Grab your offer now.`
+                    );
                     message = `📩 WhatsApp message sent to ${user.name}`;
                 } else {
                     message = `📧 WhatsApp unavailable. Sending email to ${user.name}.`;
