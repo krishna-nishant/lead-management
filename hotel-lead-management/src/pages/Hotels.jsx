@@ -37,7 +37,7 @@ const Hotels = () => {
       const data = await response.json();
   
       if (response.ok) {
-        toast.success(`✅ ${data.msg}`);
+        toast.success(`${data.msg}`);
   
         // ✅ **Send request to update score**
         const scoreResponse = await fetch("http://localhost:5000/api/leads/update-score", {
@@ -52,13 +52,12 @@ const Hotels = () => {
         const scoreData = await scoreResponse.json();
   
         if (scoreResponse.ok) {
-          toast.success(`🎉 Score Updated: ${scoreData.score}`);
+          console.log("🎉 Score Updated:", scoreData.score);          
         } else {
           console.error("❌ Score Update Error:", scoreData.msg);
-          toast.error("⚠️ Failed to update score.");
         }
       } else {
-        toast.error("⚠️ Failed to add to wishlist.");
+        toast.error(`${data.msg}`);
       }
     } catch (error) {
       console.error("❌ Error adding to wishlist:", error);
@@ -68,7 +67,7 @@ const Hotels = () => {
   
   const bookHotel = async (hotelId, hotelName) => {
     if (!user) {
-        toast.error("❌ You must be logged in to book a hotel.");
+        toast.error("You must be logged in to book a hotel.");
         return;
     }
 
@@ -89,12 +88,12 @@ const Hotels = () => {
         const data = await response.json();
 
         if (response.status === 403) {
-            toast.error("❌ Unauthorized. Please log in again.");
+            toast.error("Unauthorized. Please log in again.");
             return;
         }
 
         if (response.ok) {
-            toast.success(`✅ Successfully booked ${hotelName}! New Score: ${data.score}`);
+            toast.success(`Successfully booked ${hotelName}! New Score: ${data.score}`);
 
             // ✅ Step 2: Send AI-generated email confirmation
             const emailResponse = await fetch("http://localhost:5000/api/leads/send-booking-email", {
@@ -112,11 +111,10 @@ const Hotels = () => {
                 toast.success("📩 Confirmation email sent!");
             } else {
                 console.error("❌ Error sending email:", emailData.msg);
-                toast.error("⚠️ Failed to send email.");
+                toast.error("Failed to send email.");
             }
         } else {
             console.error("❌ Error updating score:", data.msg);
-            toast.error("⚠️ Failed to update score.");
         }
 
     } catch (error) {
@@ -124,8 +122,6 @@ const Hotels = () => {
         toast.error("Something went wrong. Try again.");
     }
 };
-
-  
 
   return (
     <div className="container mx-auto py-8 px-4">
