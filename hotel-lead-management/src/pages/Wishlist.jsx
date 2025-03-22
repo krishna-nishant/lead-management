@@ -6,6 +6,9 @@ import { Trash2, MapPin, IndianRupee  } from 'lucide-react';
 import { Toaster, toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+// Use environment variable for API URL
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const Wishlist = () => {
   const { user, token } = useContext(AuthContext);
   const [wishlist, setWishlist] = useState([]);
@@ -15,7 +18,7 @@ const Wishlist = () => {
   const fetchWishlist = () => {
     if (user) {
       setIsLoading(true);
-      fetch(`http://localhost:5000/api/wishlist/${user._id}`, {
+      fetch(`${API_URL}/api/wishlist/${user._id}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => {
@@ -40,7 +43,7 @@ const Wishlist = () => {
   const removeFromWishlist = async (hotelId) => {
     try {
   
-      const response = await fetch("http://localhost:5000/api/wishlist/remove", {
+      const response = await fetch(`${API_URL}/api/wishlist/remove`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

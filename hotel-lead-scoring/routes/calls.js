@@ -3,9 +3,11 @@ const router = express.Router();
 const User = require("../models/User"); // MongoDB Lead Model
 const makeCall = require("../utils/twilioCall");
 const generateVoice = require("../utils/generateVoice");
+const auth = require("../middleware/auth");
+const admin = require("../middleware/admin");
 
-// 📞 Call high-score leads
-router.post("/trigger-calls", async (req, res) => {
+// 📞 Call high-score leads - Admin only endpoint
+router.post("/trigger-calls", [auth, admin], async (req, res) => {
     try {
         const highScoreLeads = await User.find({ score: { $gt: 150 } });
 

@@ -2,25 +2,24 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { check, validationResult } = require("express-validator");
+// Import shared scoring configuration
+const { SCORE_RULES, categorizeLead } = require("../config/score");
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
-
-const SCORE_RULES = {
-    name: 5,
-    email: 10,
-    phone: 20,
-};
-
-const categorizeUser = (score) => {
-    if (score >= 100) return "hot";
-    if (score >= 75) return "warm";
-    return "cold";
-};
+// Remove hardcoded fallback secret
+const JWT_SECRET = process.env.JWT_SECRET;
+// Define token expiration time as constant
+const TOKEN_EXPIRY = '24h';
 
 const AuthController = {
     register: async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+        // Check if JWT_SECRET is defined
+        if (!JWT_SECRET) {
+            console.error("JWT_SECRET is not defined in environment variables");
+            return res.status(500).json({ msg: "Server configuration error" });
+        }
 
         const { name, email, password, phone } = req.body;
 
@@ -34,7 +33,7 @@ const AuthController = {
             const initialScore = (name ? SCORE_RULES.name : 0) + 
                                  (email ? SCORE_RULES.email : 0) + 
                                  (phone ? SCORE_RULES.phone : 0);
-            const category = categorizeUser(initialScore);
+            const category = categorizeLead(initialScore);
 
             user = new User({
                 name,
@@ -48,11 +47,11 @@ const AuthController = {
 
             await user.save();
 
-            const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "1h" });
+            const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
             res.json({ token, user });
         } catch (err) {
             console.error(err);
-            res.status(500).send("Server Error");
+            res.status(500).json({ msg: "Server Error" });
         }
     },
 
@@ -69,11 +68,24 @@ const AuthController = {
             const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) return res.status(400).json({ msg: "Invalid Credentials" });
 
-            const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "1h" });
-            res.json({ token });
+            const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
+            
+            // Return user data with the token for consistency with register endpoint
+            const userData = await User.findById(user.id).select("-password");
+            
+            // Add isAdmin flag based on email
+            const isAdmin = email === "nishantkrishna2005@gmail.com";
+            
+            res.json({ 
+                token, 
+                user: {
+                    ...userData._doc,
+                    isAdmin
+                }
+            });
         } catch (err) {
             console.error(err);
-            res.status(500).send("Server Error");
+            res.status(500).json({ msg: "Server Error" });
         }
     },
 

@@ -1,17 +1,3 @@
-// const mongoose = require("mongoose");
-
-// const UserSchema = new mongoose.Schema({
-//   name: { type: String, required: true },
-//   email: { type: String, unique: true, required: true },
-//   password: { type: String, required: true },
-//   score: { type: Number, default: 0 },
-//   actions: [{ action: String, timestamp: Date }],
-//   wishlist: [{ type: String }] // ✅ Store only hotel IDs (as strings)
-// });
-
-// module.exports = mongoose.model("User", UserSchema);
-
-
 const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema({
@@ -27,7 +13,14 @@ const UserSchema = new mongoose.Schema({
   actions: [{ action: String, score: Number, timestamp: Date }],
 
   // ✅ Wishlist stored in DB instead of LocalStorage
-  wishlist: [{ type: String }] ,
+  wishlist: [{ type: String }],
+
+  // ✅ Track alert history
+  lastAlert: { type: Date, default: null }, // When the last alert was sent
+  alertHistory: [{ 
+    type: { type: String, enum: ['email', 'whatsapp', 'call'] },
+    timestamp: { type: Date, default: Date.now }
+  }],
 
   createdAt: { type: Date, default: Date.now }
 });

@@ -9,11 +9,11 @@ import Hotels from "./pages/Hotels";
 import Wishlist from "./pages/Wishlist";
 import AdminDashboard from "./pages/AdminDashboard";
 import { Button } from "@/components/ui/button";
-import { Home, Heart, LogOut, LogIn, UserPlus } from "lucide-react";
+import { Home, Heart, LogOut, LogIn, UserPlus, ShieldCheck } from "lucide-react";
 import { Toaster, toast } from "sonner";
 
 function App() {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, isAdmin } = useContext(AuthContext);
   const location = useLocation(); // ✅ Get the current route
 
   return (
@@ -43,6 +43,15 @@ function App() {
                     <Heart className="h-4 w-4" />
                     <span>Wishlist</span>
                   </Link>
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-md"
+                    >
+                      <ShieldCheck className="h-4 w-4 text-green-600" />
+                      <span className="font-semibold">Admin</span>
+                    </Link>
+                  )}
                 </nav>
               ) : (
                 <nav className="flex items-center gap-4">
@@ -68,6 +77,7 @@ function App() {
               <div className="flex items-center gap-4">
                 <span className="text-sm font-medium hidden md:inline-block">
                   Welcome, {user.name}
+                  {isAdmin && <span className="text-green-600 ml-1">(Admin)</span>}
                 </span>
                 <Button
                   variant="outline"
@@ -92,7 +102,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/hotels" element={user ? <Hotels /> : <Login />} />
           <Route path="/wishlist" element={user ? <Wishlist /> : <Login />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin" element={user ? <AdminDashboard /> : <Login />} />
         </Routes>
       </main>
 

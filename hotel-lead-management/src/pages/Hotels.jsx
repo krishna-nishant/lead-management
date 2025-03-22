@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Heart, BookOpen, MapPin, IndianRupee  } from 'lucide-react';
 import { Toaster, toast } from "sonner";
 
+// Use environment variable for API URL
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const Hotels = () => {
   const { user, token } = useContext(AuthContext);
   const [hotels, setHotels] = useState([]);
@@ -25,7 +28,7 @@ const Hotels = () => {
   
     try {
       // ✅ Send request to add hotel to wishlist
-      const response = await fetch("http://localhost:5000/api/wishlist/add", {
+      const response = await fetch(`${API_URL}/api/wishlist/add`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -40,7 +43,7 @@ const Hotels = () => {
         toast.success(`${data.msg}`);
   
         // ✅ **Send request to update score**
-        const scoreResponse = await fetch("http://localhost:5000/api/leads/update-score", {
+        const scoreResponse = await fetch(`${API_URL}/api/leads/update-score`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -76,7 +79,7 @@ const Hotels = () => {
 
     try {
         // ✅ Step 1: Update Lead Score
-        const response = await fetch("http://localhost:5000/api/leads/update-score", {
+        const response = await fetch(`${API_URL}/api/leads/update-score`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -96,7 +99,7 @@ const Hotels = () => {
             toast.success(`Successfully booked ${hotelName}! New Score: ${data.score}`);
 
             // ✅ Step 2: Send AI-generated email confirmation
-            const emailResponse = await fetch("http://localhost:5000/api/leads/send-booking-email", {
+            const emailResponse = await fetch(`${API_URL}/api/leads/send-booking-email`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

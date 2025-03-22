@@ -1,41 +1,10 @@
-const Lead = require("../models/Lead");
 const User = require("../models/User");
 const twilio = require("twilio");
 const generateEmail = require("../utils/generateEmail");
 const sendEmail = require("../utils/sendEmail");
 const sendWhatsAppMessage = require("../utils/sendWhatsapp");
-
-const SCORE_RULES = {
-    name: 5,
-    email: 10,
-    phone: 20,
-    view_hotel: 10,
-    wishlist: 15,
-    booking: 50,
-};
-
-const SALES_REPS = {
-    hot: "rep1@example.com",
-    warm: "rep2@example.com",
-    cold: "rep3@example.com"
-};
-
-const categorizeLead = (score) => {
-    if (score >= 100) return "hot";
-    if (score >= 75) return "warm";
-    return "cold";
-};
-
-const getNextBestAction = async (lead) => {
-    if (lead.category === "hot") return "Call the lead immediately.";
-    if (lead.category === "warm") {
-        if (lead.phone) {
-            return "Send WhatsApp message to lead.";
-        }
-        return "WhatsApp unavailable. Send a personalized email.";
-    }
-    return "Send an introductory email.";
-};
+// Import shared scoring configuration
+const { SCORE_RULES, SALES_REPS, categorizeLead, getNextBestAction } = require("../config/score");
 
 const LeadController = {
     getLeads: async (req, res) => {
@@ -44,7 +13,7 @@ const LeadController = {
             res.json(leads);
         } catch (err) {
             console.error(err);
-            res.status(500).send("Server Error");
+            res.status(500).json({ msg: "Server Error" });
         }
     },
 
@@ -70,8 +39,7 @@ const LeadController = {
             const user = await User.findById(userId);
             if (!user) return res.status(404).json({ msg: "User not found" });
 
-            const scoreMapping = { wishlist: 15, booking: 50 };
-            const scoreToAdd = scoreMapping[action] || 0;
+            const scoreToAdd = SCORE_RULES[action] || 0;
 
             user.score += scoreToAdd;
             user.category = categorizeLead(user.score);
@@ -81,7 +49,7 @@ const LeadController = {
             res.json({ msg: "Score updated", score: user.score, category: user.category });
         } catch (err) {
             console.error(err);
-            res.status(500).send("Server Error");
+            res.status(500).json({ msg: "Server Error" });
         }
     },
 
@@ -89,29 +57,54 @@ const LeadController = {
         try {
             const users = await User.find();
             let messages = [];
+            const now = new Date();
 
             for (let user of users) {
                 let message = "No action taken.";
+                let alertType = null;
 
-                if (user.score > 100) {
+                if (user.score >= 100) {
                     message = `📞 Calling ${user.name} (${user.phone})`;
                     console.log(message);
-                } else if (user.score > 75) {
+                    alertType = 'call';
+                } else if (user.score >= 75) {
                     if (user.phone) {
-                        await sendWhatsAppMessage(user.phone, `Hey ${user.name}, you’re one step away from booking your dream stay! Grab your offer now.`);
+                        await sendWhatsAppMessage(user.phone, `Hey ${user.name}, you're one step away from booking your dream stay! Grab your offer now.`);
                         message = `📩 WhatsApp message sent to ${user.name}`;
+                        alertType = 'whatsapp';
                     } else {
-                        message = `📧 WhatsApp unavailable. Sending email to ${user.name}.`;
+                        const emailSubject = "Special Offer for Valued Customers";
+                        const emailBody = `Hi ${user.name}, 
+
+We noticed your interest in our hotels and wanted to reach out with a special offer.
+
+As a valued customer, you're eligible for a 15% discount on your next booking at any of our premium hotels.
+
+This offer is valid for the next 7 days, so don't miss out!
+
+Best regards,
+The Hotel Team`;
+
+                        await sendEmail(user.email, emailSubject, emailBody);
+                        message = `📧 WhatsApp unavailable. Email sent to ${user.name}.`;
+                        alertType = 'email';
                     }
-                } else if (user.score > 50) {
-                    const mailOptions = {
-                        from: process.env.EMAIL_USER,
-                        to: user.email,
-                        subject: "Exclusive Hotel Discounts Just for You!",
-                        text: `Hi ${user.name}, you've earned a special discount. Book now!`,
-                    };
-                    await transporter.sendMail(mailOptions);
+                } else if (user.score >= 50) {
+                    const emailSubject = "Exclusive Hotel Discounts Just for You!";
+                    const emailBody = `Hi ${user.name}, you've earned a special discount. Book now!`;
+
+                    await sendEmail(user.email, emailSubject, emailBody);
                     message = `📧 Email sent to ${user.name}`;
+                    alertType = 'email';
+                }
+
+                if (alertType) {
+                    user.lastAlert = now;
+                    user.alertHistory.push({
+                        type: alertType,
+                        timestamp: now
+                    });
+                    await user.save();
                 }
 
                 messages.push(message);
@@ -120,7 +113,7 @@ const LeadController = {
             res.json({ msg: messages });
         } catch (err) {
             console.error(err);
-            res.status(500).send("Server Error");
+            res.status(500).json({ msg: "Server Error" });
         }
     },
 
@@ -136,7 +129,7 @@ const LeadController = {
             res.json({ assignedTo: user.assignedTo, nextAction });
         } catch (err) {
             console.error(err);
-            res.status(500).send("Server Error");
+            res.status(500).json({ msg: "Server Error" });
         }
     },
 
@@ -146,7 +139,7 @@ const LeadController = {
             res.json(users);
         } catch (err) {
             console.error(err);
-            res.status(500).send("Server Error");
+            res.status(500).json({ msg: "Server Error" });
         }
     }
 };

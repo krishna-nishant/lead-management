@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { AuthContext } from "../context/AuthContext";
 import {
   Table,
   TableBody,
@@ -26,40 +28,84 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, CheckCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, ShieldAlert } from "lucide-react";
+import { toast } from "sonner";
+
+// Use environment variable for API URL
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+// Admin email allowed to access this page
+const ADMIN_EMAIL = "nishantkrishna2005@gmail.com";
 
 const AdminDashboard = () => {
   const [leads, setLeads] = useState([]);
   const [filter, setFilter] = useState("all");
   const [selectedLead, setSelectedLead] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
+  const { user, token } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchLeads = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/leads/all");
-        let updatedLeads = response.data;
+    // Check if user is authenticated and is the admin
+    if (!user) {
+      // Redirect to login if no user
+      navigate("/login");
+      return;
+    }
 
-        updatedLeads = await Promise.all(
-          updatedLeads.map(async (lead) => {
-            if (!lead.assignedTo || lead.assignedTo === "unassigned") {
-              const assignResponse = await axios.post(
-                "http://localhost:5000/api/leads/assign-lead",
-                { userId: lead._id } // ✅ Send correct userId
-              );
-              return { ...lead, assignedTo: assignResponse.data.assignedTo };
-            }
-            return lead;
-          })
-        );
+    if (user.email !== ADMIN_EMAIL) {
+      // Unauthorized access, redirect to home
+      toast.error("Unauthorized access to admin page");
+      navigate("/");
+      return;
+    }
 
-        setLeads(updatedLeads);
-      } catch (error) {
-        console.error("❌ Error fetching leads:", error);
-      }
-    };
-
+    setAuthorized(true);
     fetchLeads();
-  }, []);
+  }, [user, navigate]);
+
+  const fetchLeads = async () => {
+    if (!token) return;
+    
+    setLoading(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/leads/all`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      let updatedLeads = response.data;
+
+      updatedLeads = await Promise.all(
+        updatedLeads.map(async (lead) => {
+          if (!lead.assignedTo || lead.assignedTo === "unassigned") {
+            const assignResponse = await axios.post(
+              `${API_URL}/api/leads/assign-lead`,
+              { userId: lead._id },
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`
+                }
+              }
+            );
+            return { ...lead, assignedTo: assignResponse.data.assignedTo };
+          }
+          return lead;
+        })
+      );
+
+      setLeads(updatedLeads);
+    } catch (error) {
+      console.error("❌ Error fetching leads:", error);
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please login again.");
+        navigate("/login");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredLeads = leads.filter((lead) =>
     filter === "all" ? true : lead.category === filter
@@ -67,38 +113,114 @@ const AdminDashboard = () => {
 
   const sendAlerts = async () => {
     try {
+      // Show loading toast
+      const loadingToast = toast.loading("Sending alerts to leads...");
+      
       const response = await fetch(
-        "http://localhost:5000/api/leads/check-score",
+        `${API_URL}/api/leads/check-score`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
           },
         }
       );
 
+      if (!response.ok) {
+        throw new Error(`Status: ${response.status}`);
+      }
+
       const data = await response.json();
-      alert(`✅ Alerts Sent: ${data.msg}`);
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+      
+      // Process and display alert summary
+      if (Array.isArray(data.msg) && data.msg.length > 0) {
+        // Count different types of alerts
+        const summary = data.msg.reduce((acc, message) => {
+          if (message.includes("Email sent")) {
+            acc.emails++;
+          } else if (message.includes("WhatsApp")) {
+            acc.whatsapp++;
+          } else if (message.includes("Calling")) {
+            acc.calls++;
+          } else if (message.includes("No action")) {
+            acc.noAction++;
+          }
+          return acc;
+        }, { emails: 0, whatsapp: 0, calls: 0, noAction: 0 });
+        
+        // Show summary as success toast
+        toast.success(
+          <div>
+            <p className="font-bold mb-2">Alerts Summary:</p>
+            <ul className="text-sm">
+              {summary.emails > 0 && <li>📧 Emails: {summary.emails}</li>}
+              {summary.whatsapp > 0 && <li>📱 WhatsApp: {summary.whatsapp}</li>}
+              {summary.calls > 0 && <li>📞 Calls: {summary.calls}</li>}
+              {summary.noAction > 0 && <li>⏸️ No Action: {summary.noAction}</li>}
+            </ul>
+          </div>,
+          { duration: 5000 }
+        );
+        
+        // Refresh leads data to show updated alert history
+        fetchLeads();
+      } else {
+        toast.success("Alerts processed successfully");
+      }
     } catch (error) {
       console.error("Error sending alerts:", error);
-      alert("❌ Failed to send alerts.");
+      toast.error("Failed to send alerts.");
     }
   };
 
   const triggerCalls = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/calls/trigger-calls",
-        { method: "POST" }
+        `${API_URL}/api/calls/trigger-calls`,
+        { 
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
+      if (!response.ok) {
+        throw new Error(`Status: ${response.status}`);
+      }
+
       const data = await response.json();
-      alert(`${data.msg}`);
+      toast.success(`${data.msg}`);
     } catch (error) {
       console.error("❌ Error triggering calls:", error);
-      alert("Error placing calls.");
+      toast.error("Error placing calls.");
     }
   };
+
+  // If not authorized, show a message
+  if (!authorized && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <ShieldAlert className="h-16 w-16 text-red-500 mb-4" />
+        <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
+        <p className="text-center mb-4">You don't have permission to access this page.</p>
+        <Button onClick={() => navigate("/")}>Return to Home</Button>
+      </div>
+    );
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        <span className="ml-2">Loading...</span>
+      </div>
+    );
+  }
 
   const getCategoryBadge = (category) => {
     switch (category) {
